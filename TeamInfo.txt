@@ -1,2 +1,11 @@
 hjl
 ahw
+넵
+일단 다른 학생 입장에서 해야하는 걸 다시 적어보자면
+1. 다른 학생이 새로운 master를 만들때까지 ㄱㄷ
+2. fetch
+3. history에서 새로운 master에 마우스 오른쪽 클릭 후 reset current branch to this commit
+4. file status에서 Unstaged files란에 있는 모든 파일에 대해서 마우스 오른쪽 클릭
+4-1. 새로 생성한 파일은 remove클릭
+4-2. 수정한 파일은 discard 클릭
+=> 완벽하게 처음 상태로 돌아갈 수 있음!
