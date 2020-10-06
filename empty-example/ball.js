@@ -1,17 +1,33 @@
-var xmaxspeed = 7.1;
+var xmaxspeed = 7.4;
+var ymaxspeed = 13;
+var arrow_speed = xmaxspeed*1.7;
+var walljumpY = 10.5;
+var jump_speed = ymaxspeed*1.65;
+var respawnX = [twidth*2.5,twidth*2.5,twidth*2.5,twidth*2.5,twidth*2.5,
+                twidth*15,twidth*2.5,twidth*2.5,twidth*5.5,twidth*17.5,
+                twidth*2.1,twidth*2.1,twidth*6.5,twidth*18.1,twidth*2.1,
+                twidth*2.1,twidth*15.8,twidth*1.8,twidth*2.1,twidth*2.1,twidth*2.5
+               ];
+var respawnY = [twidth*11.5,twidth*8.5,twidth*2,twidth*10.5,twidth*2,
+                twidth*2,twidth*13.5,twidth*2,twidth*13.5,twidth*7.5,
+                twidth*11.9,twidth*12.9,twidth*1.5,twidth*1.9,twidth*5.9,
+                twidth*3.1,twidth*11.8,twidth*2.1,twidth*1.9,twidth*9.5,twidth*10
+               ];
 
 var ball = 
 {
-  life : 100,
+  dead : false,
+  life : 10,
   hit_jump : false,
   hit_right_arrow : false,
   hit_left_arrow : false,
+  hit_bomb : false,
   hitted_blockX :0,
   hitted_blockY :0,
   xpos_before_collision : 0, //collided block`s  j(x) index
   ypos_before_collision : 0, //collided block`s  i(y) index
-  xpos : 100,
-  ypos : 700,
+  xpos : respawnX[stage],
+  ypos : respawnY[stage],
   bwidth : 10,
   xspeed : 0,
   yspeed : 0,
@@ -27,108 +43,125 @@ var ball =
     this.ypos += this.yspeed;                //update yposition with yspeed
     this.xpos += this.xspeed;                //update xposition with yspeed
     //collision detection
-    if(this.collision()===true)  
+    if(this.collision()===true)  //check collision
     {
-      if(this.ypos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth+2&&this.ypos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].ypos-2&&this.xpos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].xpos)//hit from left
+      if(this.ypos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth&&this.ypos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].ypos&&this.xpos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].xpos)//hit from left
       {
-        print(3);
+        ball_hitwall.play();
           this.xspeed = -this.xspeed/2;  //bound to opposite direction by current speed/2
-            if(keyIsDown(LEFT_ARROW))
+            if(keyIsDown(LEFT_ARROW))//using wall jump
            {
-            print("wall jump");
-            this.yspeed = -12;
+             ball_walljump.play();
+            this.yspeed = -walljumpY;    //change speed
            this.xspeed = -xmaxspeed*1.5;
              score++;
            }
-          this.xpos = this.xpos_before_collision;  //set position to backup position
           this.xpos = this.xpos_before_collision-twidth/4;
+          if(this.collision())
+            {
+              this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth+twidth/4;
+              this.yspeed_modifiy = 1;
+            }
           this.hit_right_arrow = false;          //for drop
           this.hit_left_arrow = false;           //for drop
       }
-            if(this.ypos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth+2&&this.ypos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].ypos-2&&this.xpos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].xpos)//hit from right
+            if(this.ypos_before_collision<=terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth&&this.ypos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].ypos&&this.xpos_before_collision>=terrains[this.hitted_blockY][this.hitted_blockX].xpos)//hit from right
       {
-        print(3);
+        ball_hitwall.play();
           this.xspeed = -this.xspeed/2;  //bound to opposite direction by current speed/2
-            if(keyIsDown(RIGHT_ARROW))
+            if(keyIsDown(RIGHT_ARROW))  //using wall jump
            {
-            print("wall jump");
-             this.yspeed = -12;
+             ball_walljump.play();
+             this.yspeed = -walljumpY;    //change speed
            this.xspeed = xmaxspeed*1.5;
              score++;
            }
           this.xpos = this.xpos_before_collision+twidth/4;  //set position to backup position
+            if(this.collision())
+            {
+              this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth+twidth/4;
+              this.yspeed_modifiy = 1;
+            }
           this.hit_right_arrow = false;          //for drop
           this.hit_left_arrow = false;           //for drop
       }
       if(this.ypos_before_collision<terrains[this.hitted_blockY][this.hitted_blockX].ypos)//hit upper
       {
-        print(1);
-          if(terrains[this.hitted_blockY][this.hitted_blockX].type===2)
+          if(terrains[this.hitted_blockY][this.hitted_blockX].type===2)  //breakable block
           {
-            terrains[this.hitted_blockY][this.hitted_blockX].type=0;
+            block_break.play();
+            terrains[this.hitted_blockY][this.hitted_blockX].type=0;  //change block to blank
             this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos-twidth/2;
-            this.yspeed=-14;
-            this.yspeed_modify = 1;
-            this.hit_jump = false;
+            this.yspeed=-ymaxspeed;      //reset speed to upper
+            this.yspeed_modify = 1;  //change gravity direction
+            this.hit_jump = false;  //change to normal jump if hitted jump block right before
             score++;
-            print("breakable");
           }
-          else if(this.hit_right_arrow===true)
+          else if(this.hit_right_arrow===true)//->block (4)
           {
-            print("hit -> arrow");
+            block_arrow.play();
             this.yspeed = 0;
-            this.xspeed = xmaxspeed;
-            this.xpos = terrains[this.hitted_blockY][this.hitted_blockX].xpos+twidth+10;
-            this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth/2;
+            this.xspeed = arrow_speed;
+            this.xpos = terrains[this.hitted_blockY][this.hitted_blockX].xpos+twidth+10;//starts at
+            this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+5;
             score++;
           }
-          else if(this.hit_left_arrow===true)
+          else if(this.hit_left_arrow===true)//<- block (5)
           {
-            print("hit <- arrow");
+            block_arrow.play();
             this.yspeed = 0;
-            this.xspeed = -xmaxspeed;
-            this.xpos = terrains[this.hitted_blockY][this.hitted_blockX].xpos-10;
-            this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth/2;
+            this.xspeed = -arrow_speed;
+            this.xpos = terrains[this.hitted_blockY][this.hitted_blockX].xpos-10;//starts at
+            this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos+5;
             score++;
           }
-          else if(terrains[this.hitted_blockY][this.hitted_blockX].type===3)
+          else if(terrains[this.hitted_blockY][this.hitted_blockX].type===3)//jump block
           {
+            block_jump.play();
             this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos-twidth/2;
-            this.yspeed = -20;
+            this.yspeed = -jump_speed;
             score++;
-            print("hit jump block");
           }
-        else if(terrains[this.hitted_blockY][this.hitted_blockX].type===6)
+        else if(terrains[this.hitted_blockY][this.hitted_blockX].type===6)//bomb block
         {
-          if(this.life>0)
-          {
-          this.xpos=100;
-          this.ypos=100;
-          this.xspeed=0;
-          this.yspeed=0;
+          block_bomb.play();
           this.life--;
           score+=33;
-          reset_map();
-          }
-          else
+          reset_map();//recreate used block such as breakable blocks
+          this.dead = true;
+          this.hit_bomb = true;
+          if(this.life<0)
+          {
             gameover = true;
+          }
         }
-          else
+          else if(terrains[this.hitted_blockY][this.hitted_blockX].type===1&&terrains[this.hitted_blockY-1][this.hitted_blockX].type===0)//normal blocks
           {    
+          if(stage<20)
+          {
+          ball_bounce.play();
+          }
           this.ypos = terrains[this.hitted_blockY][this.hitted_blockX].ypos-twidth/2;
-          this.yspeed=-14;
+          this.yspeed=-ymaxspeed;
           this.yspeed_modify = 1;
           this.hit_jump = false;
+            if(this.xspeed >xmaxspeed)
+              {
+                this.xspeed = xmaxspeed;
+              }
+            else if(this.xspeed <-xmaxspeed)
+              {
+                this.xspeed = -xmaxspeed;
+              }
             score++;
           }
       }
       if(this.ypos_before_collision>terrains[this.hitted_blockY][this.hitted_blockX].ypos+twidth) //hit downward
       {
-        print(2);
-        this.yspeed=14;
+        this.yspeed=ymaxspeed;
         this.yspeed_modify =-1;
         this.ypos+=this.yspeed;
-        if(this.collision())
+        if(this.collision())//collision check for preventing the ball diging the wall
         {
           if(this.xpos>terrains[this.hitted_blockY][this.hitted_blockX].xpos+(twidth/2))
           {
@@ -146,65 +179,68 @@ var ball =
     }
     }//collision detection
     
-    if(this.ypos>height)
+    if(this.ypos>height)//falling down
     {
-      if(this.life>0)
-      {
-      this.xpos=100;
-      this.ypos=100;
-      this.xspeed=0;
-      this.yspeed=0;
-      this.life--;
+      
+        this.reset_state();
+        this.life--;
         score+=33;
-      reset_map();
-      }
-      else
+        reset_map();
+        this.dead = true;
+        ball_fall.play();
+      if(this.life<0)
         gameover = true;
     }
-    else if(this.xpos>width)
+    else if(this.xpos>width)//stage clear
     {
+      if(stage<20)
+      {
       stage++;
-      this.xpos=100;
-      this.ypos=100;
-      this.xspeed=0;
-      this.yspeed=0;
+      this.reset_state();
+      }
+      else
+        {
+          this.xpos = width+100;
+          this.ypos = twidth*col/4;
+        }
     }
     if(this.hit_right_arrow===false&&this.hit_left_arrow===false)
     {
     this.yspeedupdate();
     }
     this.xspeedupdate();
-    print("stage",stage);
-    //print("yspeed",this.yspeed);
   },
   yspeedupdate : function()
   {
     this.yspeed += this.yspeed_modifiy;
     if(this.hit_jump===false)
     {
-      if(this.yspeed>12)
+      if(this.yspeed>ymaxspeed)
       {
-        this.yspeed=12;
+        this.yspeed=ymaxspeed;
       }
-      else if(this.yspeed<-12)
+      else if(this.yspeed<-ymaxspeed)
       {
-        this.yspeed=-12;
+        this.yspeed=-ymaxspeed;
       }
     }
   },
   xspeedupdate : function()
   {
+    if(stage<20)
+      {
     if(keyIsDown(LEFT_ARROW))
     {
       this.hit_right_arrow=false;
             if(this.xspeed>=-xmaxspeed)
-            this.xspeed -= 0.3;
+            this.xspeed -= 0.6;
     }
     else if(keyIsDown(RIGHT_ARROW)){
       this.hit_left_arrow=false;
             if(this.xspeed<=xmaxspeed)
-            this.xspeed += 0.3;
+            this.xspeed += 0.6;
     }
+      }
   },
   collision : function()
   {
@@ -257,5 +293,13 @@ var ball =
       }
     }
     return false;
+  },
+  
+  reset_state : function()
+  {
+      this.xpos=respawnX[stage];
+      this.ypos=respawnY[stage];
+      this.xspeed=0;
+      this.yspeed=0;
   }
 }
